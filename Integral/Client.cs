@@ -67,9 +67,57 @@ namespace Integral
                 EventInfo?.Invoke(data);
             }
         }
+        int numProcs = Environment.ProcessorCount;  // количество доступных ядер
+        private  Func<double, double> function;  // Интегрируемая функция
+        private int B, A, N;
         private void Integrate(string data)
         {
             //метод интегрирования в пределех data(сплитить)
+            char[] sep = { ' ' };
+            var cd = data.Split(sep, 3);
+            A = Int32.Parse(cd[0]);
+            B = Int32.Parse(cd[1]);
+            N = Int32.Parse(cd[2]);
+            MediumRectangle();
         }
+        public void Method(Func<double, double> f)
+        {
+            function = f;
+        }
+
+        public void MediumRectangle()
+        {
+            double dx = (B - A) / N;  // шаг разбиения отрезка [A;B] 
+            double res = 0;
+            double point_offset = A + 0.5 * dx;  // задаёт долю смещения точки, в которой вычисляется функция, от левого края отрезка dx
+            int partsSize = N / numProcs;
+            int balance = N - partsSize * numProcs;
+            object block = new object();
+
+            void Calculations(int part)
+            {
+                int start = part * partsSize + ((part < balance) ? part : balance);
+                int finish = (part + 1) * partsSize + ((part + 1 < balance) ? part : (balance - 1));
+                double partial_result = 0;
+                for (int i = start; i < finish; i++)
+                {
+                    partial_result += function(point_offset + i * dx);
+                }
+                Monitor.Enter(block);
+                try
+                {
+                    res += partial_result;
+                }
+                finally
+                {
+                    Monitor.Exit(block);
+                }
+            }
+
+            Parallel.For(0, numProcs, Calculations);
+
+            EventInfo?.Invoke(res.ToString());
+        }
+
     }
 }

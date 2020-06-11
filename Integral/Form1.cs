@@ -18,8 +18,15 @@ namespace Integral
         public Form1()
         {
             InitializeComponent();
-            cl = new Client("taerd");//host name
+            cl = new Client("LAPTOP-RPJ3PSRC");//host name
             cl.EventInfo += OnChange;
+
+            double Func(double x)
+            {
+                return x*x;
+            }
+
+            cl.Method(Func);
         }
 
         private void button1_Click(object sender, EventArgs e)

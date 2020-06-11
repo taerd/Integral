@@ -10,6 +10,10 @@ namespace Server
     {
         static void Main(string[] args)
         {
+            Console.WriteLine("Старт работы сервера...");
+
+            new Server("data.txt");
+            Console.ReadKey();
         }
     }
 }
